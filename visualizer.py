@@ -3641,9 +3641,9 @@ def generate_charts_viewer(conn) -> Optional[str]:
                 loadingMsgs.forEach(msg => msg.remove());
                 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                 if (isLocal) {{
-                    addAIMessage('网络错误，请确保AI服务已启动（运行 ai_server.py）', 'error');
+                    addAIMessage('❌ 网络错误：请确保AI服务已启动（运行 ai_server.py）<br><small>本地开发环境需要手动启动后端服务</small>', 'error');
                 }} else {{
-                    addAIMessage('网络错误，无法连接到AI服务。请检查网络连接或稍后再试。', 'error');
+                    addAIMessage('❌ 无法连接到AI分析服务<br><small>可能原因：<br>1. AI服务正在启动中（免费版Render需要30秒唤醒）<br>2. 网络连接不稳定<br>3. 服务暂时不可用<br><br>请稍等片刻后重试</small>', 'error');
                 }}
             }}
         }}

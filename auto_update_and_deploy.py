@@ -120,8 +120,17 @@ def ensure_branch_exists(project_dir, branch_name):
     current_branch = stdout.strip() if success else ""
     
     if not current_branch:
-        # 没有分支，创建新分支
-        print(f"📝 创建 {branch_name} 分支...")
+        # 没有分支，需要先创建初始提交，然后创建分支
+        print(f"📝 首次提交，创建 {branch_name} 分支...")
+        
+        # 先创建一个空的初始提交（如果还没有提交）
+        success, stdout, stderr = run_command("git log --oneline -1", cwd=project_dir)
+        if not success:
+            print("📝 创建初始提交...")
+            run_command("git add .", cwd=project_dir)
+            run_command('git commit -m "Initial commit"', cwd=project_dir)
+        
+        # 创建并切换到目标分支
         success, _, stderr = run_command(
             f"git checkout -b {branch_name}",
             cwd=project_dir

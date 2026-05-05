@@ -5,6 +5,7 @@ AI分析服务后端
 
 import json
 import logging
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from ai_service import analyze_wordcloud, analyze_3d_chart, call_qwen_ai
@@ -12,7 +13,15 @@ from ai_service import analyze_wordcloud, analyze_3d_chart, call_qwen_ai
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)
+
+# 配置CORS - 允许所有来源访问（生产环境可限制为特定域名）
+CORS(app, resources={
+    r"/api/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 
 
 @app.route('/api/ai/analyze-wordcloud', methods=['POST'])
@@ -76,6 +85,23 @@ def health_check():
     return jsonify({'status': 'ok'})
 
 
+@app.route('/api/ai/status', methods=['GET'])
+def api_status():
+    """服务状态检查"""
+    return jsonify({
+        'status': 'ok',
+        'service': 'social-media-ai-server',
+        'version': '1.0.0',
+        'endpoints': [
+            '/api/ai/analyze-wordcloud',
+            '/api/ai/analyze-3d',
+            '/api/ai/chat',
+            '/api/health',
+            '/api/ai/status'
+        ]
+    })
+
+
 def start_ai_server(port=5000):
     """启动AI服务"""
     print(f"🤖 AI分析服务启动中...")
@@ -85,6 +111,7 @@ def start_ai_server(port=5000):
     print(f"     - POST /api/ai/analyze-3d")
     print(f"     - POST /api/ai/chat")
     print(f"     - GET  /api/health")
+    print(f"     - GET  /api/ai/status")
     app.run(host='0.0.0.0', port=port, debug=False)
 
 
