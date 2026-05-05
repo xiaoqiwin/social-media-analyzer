@@ -106,6 +106,16 @@ except ImportError as e:
     AI_SERVER_AVAILABLE = False
     print(f"⚠️ AI服务器模块导入失败: {e}")
 
+# 导入自动部署模块
+try:
+    from auto_update_and_deploy import commit_and_push, run_command
+
+    DEPLOY_AVAILABLE = True
+    print("✅ 自动部署模块导入成功")
+except ImportError as e:
+    DEPLOY_AVAILABLE = False
+    print(f"⚠️ 自动部署模块导入失败: {e}")
+
 class SocialMediaHotspotSystem:
     """社交媒体热点话题分析系统主类"""
 
@@ -139,6 +149,7 @@ class SocialMediaHotspotSystem:
         print("10. 查询数据库统计")
         print("11. 验证系统模块")
         print("12. 启动AI分析服务")
+        print("13. 部署网站到Netlify")
         print("0. 退出系统")
         print("-" * 50)
 
@@ -156,7 +167,7 @@ class SocialMediaHotspotSystem:
     def get_user_choice(self) -> str:
         """获取用户选择"""
         try:
-            choice = input("请选择操作 (0-12): ").strip()
+            choice = input("请选择操作 (0-13): ").strip()
             return choice
         except (EOFError, KeyboardInterrupt):
             return "0"  # 用户按Ctrl+C或Ctrl+Z，选择退出
@@ -301,6 +312,39 @@ class SocialMediaHotspotSystem:
             except Exception as e:
                 print(f"⚠️ 停止AI服务时出错: {e}")
 
+    def deploy_website(self) -> bool:
+        """部署网站到Netlify"""
+        if not DEPLOY_AVAILABLE:
+            print("❌ 自动部署模块不可用")
+            return False
+
+        print("\n" + "=" * 60)
+        print("🚀 部署网站到Netlify")
+        print("=" * 60)
+        print("此操作将:")
+        print("  1. 提交所有更改到Git")
+        print("  2. 推送到GitHub仓库")
+        print("  3. 触发Netlify自动部署")
+        print("=" * 60)
+
+        try:
+            project_dir = os.path.dirname(os.path.abspath(__file__))
+            success = commit_and_push(project_dir)
+
+            if success:
+                print("\n✅ 部署成功！")
+                print("   网站将在1-2分钟后自动更新")
+                print("   访问地址: https://deluxe-zabaione-3721cb.netlify.app/")
+            else:
+                print("\n❌ 部署失败，请检查错误信息")
+
+            return success
+
+        except Exception as e:
+            self.logger.error(f"部署过程中出错: {e}")
+            print(f"❌ 部署失败: {e}")
+            return False
+
     def run_visualizer(self) -> bool:
         """运行可视化模块"""
         self.logger.info("开始生成可视化图表...")
@@ -331,6 +375,13 @@ class SocialMediaHotspotSystem:
                     print("💡 提示: 在浏览器中打开图表页面，点击 '🤖 AI分析' 按钮即可使用AI功能")
                 else:
                     print("⚠️ AI服务模块不可用，无法启动AI分析功能")
+
+                # 询问是否部署到Netlify
+                if DEPLOY_AVAILABLE:
+                    print("\n🚀 是否立即部署网站到Netlify？")
+                    confirm = input("   部署后其他用户可以看到最新数据 (y/n, 默认n): ").strip().lower()
+                    if confirm == 'y':
+                        self.deploy_website()
             else:
                 print("❌ 可视化图表生成失败")
 
@@ -769,6 +820,10 @@ class SocialMediaHotspotSystem:
                         self.start_ai_server()
                     else:
                         print("❌ AI服务器模块不可用")
+                    self.wait_for_enter()
+
+                elif choice == "13":  # 部署网站到Netlify
+                    self.deploy_website()
                     self.wait_for_enter()
 
                 else:

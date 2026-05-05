@@ -23,6 +23,14 @@ import visualizer
 import reporter
 from config import get_db_connection, test_connection
 
+# 导入自动部署模块
+try:
+    from auto_update_and_deploy import commit_and_push
+
+    DEPLOY_AVAILABLE = True
+except ImportError:
+    DEPLOY_AVAILABLE = False
+
 # 获取日志记录器
 logger = utils.get_logger(__name__)
 
@@ -173,6 +181,22 @@ class ScheduledAnalyzer:
                 self.success_count += 1
                 self.log_schedule_event(f"第 {self.run_count} 次分析", f"全部完成，耗时 {time_cost:.1f}秒")
                 print(f"\n✅ 第 {self.run_count} 次定时分析全部完成！")
+
+                # 自动部署到Netlify
+                if DEPLOY_AVAILABLE:
+                    print("\n🚀 正在自动部署网站到Netlify...")
+                    try:
+                        project_dir = os.path.dirname(os.path.abspath(__file__))
+                        deploy_success = commit_and_push(project_dir, message=f"定时更新: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                        if deploy_success:
+                            self.log_schedule_event("自动部署", "部署成功")
+                            print("✅ 自动部署成功！网站将在1-2分钟后更新")
+                        else:
+                            self.log_schedule_event("自动部署", "部署失败")
+                            print("⚠️ 自动部署失败")
+                    except Exception as deploy_error:
+                        self.log_schedule_event("自动部署", f"部署异常: {str(deploy_error)}")
+                        print(f"⚠️ 自动部署异常: {deploy_error}")
             else:
                 self.fail_count += 1
                 failed_steps = [step for step, success in results["steps"].items() if not success]
