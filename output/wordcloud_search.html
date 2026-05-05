@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>词云图 - 事件搜索</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', Arial, sans-serif;
+            background: #ffffff;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 25px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .header h1 {
+            color: #1a1a1a;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 15px;
+        }
+
+        .search-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #1890ff;
+        }
+
+        .search-btn {
+            padding: 12px 24px;
+            background: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: background 0.2s;
+        }
+
+        .search-btn:hover {
+            background: #40a9ff;
+        }
+
+        .filter-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .filter-tag {
+            padding: 6px 12px;
+            background: #f0f0f0;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .filter-tag:hover {
+            background: #e6f7ff;
+            border-color: #1890ff;
+            color: #1890ff;
+        }
+
+        .filter-tag.active {
+            background: #1890ff;
+            color: white;
+            border-color: #1890ff;
+        }
+
+        .events-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+
+        .event-card {
+            background: white;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .event-card:hover {
+            border-color: #1890ff;
+            box-shadow: 0 4px 12px rgba(24, 144, 255, 0.1);
+        }
+
+        .event-card.selected {
+            border-color: #1890ff;
+            background: #f0f7ff;
+        }
+
+        .event-card.hidden {
+            display: none;
+        }
+
+        .event-title {
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 15px;
+        }
+
+        .event-stats {
+            display: flex;
+            gap: 12px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .event-stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .hot-value {
+            color: #1890ff;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chart-frame {
+            width: 100%;
+            height: 600px;
+            border: none;
+            border-radius: 8px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px;
+            color: #999;
+        }
+
+        .footer {
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+            margin-top: 20px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>☁️ 词云图 - 事件搜索</h1>
+            <p class="subtitle">选择事件查看该事件的词云图，词大小按出现频率比例缩放</p>
+        </div>
+
+        <div class="search-panel">
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" 
+                       placeholder="搜索事件标题..." oninput="filterEvents()">
+                <button class="search-btn" onclick="showAllEvents()">显示全部</button>
+            </div>
+            <div class="filter-tags">
+                <span class="filter-tag active" onclick="filterByType('all')">全部事件</span>
+                <span class="filter-tag" onclick="filterByType('has_wordcloud')">有词云图</span>
+                <span class="filter-tag" onclick="sortEvents('hot')">按热度排序</span>
+                <span class="filter-tag" onclick="sortEvents('comments')">按评论数排序</span>
+            </div>
+            <div class="events-list" id="eventsList">
+                <!-- 事件卡片将通过JavaScript动态生成 -->
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">
+                <span id="currentChartTitle">☁️ 全部事件词云图</span>
+                <span id="currentChartStats"></span>
+            </div>
+            <iframe id="chartFrame" class="chart-frame" src="wordcloud.html"></iframe>
+        </div>
+
+        <div class="footer">
+            <p>© 2026 社交媒体热点话题分析系统 | 词云图事件搜索功能</p>
+        </div>
+    </div>
+
+    <script>
+        const allEvents = [{"id": 427, "title": "浏阳烟花厂爆炸致26死61伤", "hot_value": 12388935.0, "formatted_hot": "1238.9万", "comment_count": 43, "has_wordcloud": true}, {"id": 218, "title": "用烧烤签给狗撸串顾客账号已私密", "hot_value": 2237331.0, "formatted_hot": "223.7万", "comment_count": 49, "has_wordcloud": true}, {"id": 219, "title": "心有热爱永远正值青春", "hot_value": 1791760.0, "formatted_hot": "179.2万", "comment_count": 42, "has_wordcloud": true}, {"id": 429, "title": "数字技术催生文旅新业态", "hot_value": 1700874.0, "formatted_hot": "170.1万", "comment_count": 5, "has_wordcloud": true}, {"id": 97, "title": "葛仙村度假区致歉", "hot_value": 1588876.0, "formatted_hot": "158.9万", "comment_count": 47, "has_wordcloud": true}, {"id": 248, "title": "浏阳烟花厂爆炸致3死25伤", "hot_value": 1433271.0, "formatted_hot": "143.3万", "comment_count": 36, "has_wordcloud": true}, {"id": 127, "title": "张雪机车再夺冠军", "hot_value": 1266208.0, "formatted_hot": "126.6万", "comment_count": 50, "has_wordcloud": true}, {"id": 98, "title": "世界杯转播权再现中国式僵局", "hot_value": 920811.0, "formatted_hot": "92.1万", "comment_count": 50, "has_wordcloud": true}, {"id": 128, "title": "张雪机车回应再次夺冠", "hot_value": 919319.0, "formatted_hot": "91.9万", "comment_count": 34, "has_wordcloud": true}, {"id": 430, "title": "导致脊柱侧弯的姿势都好舒服", "hot_value": 756919.0, "formatted_hot": "75.7万", "comment_count": 41, "has_wordcloud": true}, {"id": 129, "title": "95后把卡脖子难题变成咱的杀手锏", "hot_value": 709870.0, "formatted_hot": "71.0万", "comment_count": 14, "has_wordcloud": true}, {"id": 431, "title": "国内一年仅卖2763万台彩电", "hot_value": 680080.0, "formatted_hot": "68.0万", "comment_count": 50, "has_wordcloud": true}, {"id": 221, "title": "二十七八岁什么感觉", "hot_value": 656374.0, "formatted_hot": "65.6万", "comment_count": 50, "has_wordcloud": true}, {"id": 101, "title": "湘西赶尸舞", "hot_value": 644508.0, "formatted_hot": "64.5万", "comment_count": 50, "has_wordcloud": true}, {"id": 222, "title": "布洛芬头一回累晕菜了", "hot_value": 625893.0, "formatted_hot": "62.6万", "comment_count": 50, "has_wordcloud": true}, {"id": 223, "title": "高铁ABC座很暧昧", "hot_value": 555376.0, "formatted_hot": "55.5万", "comment_count": 49, "has_wordcloud": true}, {"id": 433, "title": "你根本没意识到自己有多年轻", "hot_value": 548717.0, "formatted_hot": "54.9万", "comment_count": 49, "has_wordcloud": true}, {"id": 434, "title": "白日梦我", "hot_value": 548292.0, "formatted_hot": "54.8万", "comment_count": 48, "has_wordcloud": true}, {"id": 296, "title": "浏阳烟花厂爆炸几百斤石头被炸飞", "hot_value": 515661.0, "formatted_hot": "51.6万", "comment_count": 53, "has_wordcloud": true}, {"id": 103, "title": "对自己不好的事别到处说", "hot_value": 493621.0, "formatted_hot": "49.4万", "comment_count": 47, "has_wordcloud": true}, {"id": 131, "title": "追星女的手机密码人尽皆知", "hot_value": 475451.0, "formatted_hot": "47.5万", "comment_count": 50, "has_wordcloud": false}, {"id": 172, "title": "单依纯草莓音乐节", "hot_value": 451972.0, "formatted_hot": "45.2万", "comment_count": 45, "has_wordcloud": false}, {"id": 27, "title": "白鹿摘了姚译添眼镜给自己戴", "hot_value": 447414.0, "formatted_hot": "44.7万", "comment_count": 5, "has_wordcloud": false}, {"id": 164, "title": "白鹿被孟子义说挂相", "hot_value": 443773.0, "formatted_hot": "44.4万", "comment_count": 97, "has_wordcloud": false}, {"id": 160, "title": "黄灿灿 blackpink都没这么累", "hot_value": 438257.0, "formatted_hot": "43.8万", "comment_count": 19, "has_wordcloud": false}, {"id": 224, "title": "前男友香辣蟹", "hot_value": 421868.0, "formatted_hot": "42.2万", "comment_count": 50, "has_wordcloud": false}, {"id": 25, "title": "刘耀文solo好牛", "hot_value": 408043.0, "formatted_hot": "40.8万", "comment_count": 34, "has_wordcloud": false}, {"id": 104, "title": "余华辅导儿子语文后考试不及格", "hot_value": 398106.0, "formatted_hot": "39.8万", "comment_count": 47, "has_wordcloud": false}, {"id": 114, "title": "鹿晗没带馒头参加五哈的原因", "hot_value": 396719.0, "formatted_hot": "39.7万", "comment_count": 13, "has_wordcloud": false}, {"id": 132, "title": "张婧仪方要求你好星期六道歉", "hot_value": 389159.0, "formatted_hot": "38.9万", "comment_count": 11, "has_wordcloud": false}, {"id": 428, "title": "奔跑吧打假", "hot_value": 389119.0, "formatted_hot": "38.9万", "comment_count": 47, "has_wordcloud": false}, {"id": 133, "title": "中国台北女队教练发文控诉", "hot_value": 378460.0, "formatted_hot": "37.8万", "comment_count": 50, "has_wordcloud": false}, {"id": 253, "title": "马嘉祺破音", "hot_value": 376150.0, "formatted_hot": "37.6万", "comment_count": 63, "has_wordcloud": false}, {"id": 32, "title": "曾沛慈一把牵走张慧雯", "hot_value": 368917.0, "formatted_hot": "36.9万", "comment_count": 14, "has_wordcloud": false}, {"id": 225, "title": "余额宝收益率破1是什么情况", "hot_value": 366778.0, "formatted_hot": "36.7万", "comment_count": 5, "has_wordcloud": false}, {"id": 157, "title": "国乒男团2比3瑞典", "hot_value": 359205.0, "formatted_hot": "35.9万", "comment_count": 22, "has_wordcloud": false}, {"id": 228, "title": "金价又又又跌了", "hot_value": 356658.0, "formatted_hot": "35.7万", "comment_count": 27, "has_wordcloud": false}, {"id": 229, "title": "阚清子和老公机场出发", "hot_value": 353014.0, "formatted_hot": "35.3万", "comment_count": 14, "has_wordcloud": false}, {"id": 435, "title": "穆祉丞没发大合照", "hot_value": 349284.0, "formatted_hot": "34.9万", "comment_count": 43, "has_wordcloud": false}, {"id": 230, "title": "王安宇吃火锅被问是大学生吗", "hot_value": 348974.0, "formatted_hot": "34.9万", "comment_count": 49, "has_wordcloud": false}, {"id": 231, "title": "女子搭网约车强抢方向盘酿车祸", "hot_value": 348911.0, "formatted_hot": "34.9万", "comment_count": 50, "has_wordcloud": false}, {"id": 232, "title": "19岁石头身高已达185cm", "hot_value": 345244.0, "formatted_hot": "34.5万", "comment_count": 6, "has_wordcloud": false}, {"id": 233, "title": "王一博未来我来MV", "hot_value": 343381.0, "formatted_hot": "34.3万", "comment_count": 47, "has_wordcloud": false}, {"id": 257, "title": "2万人的人海3分钟让出生命通道", "hot_value": 336628.0, "formatted_hot": "33.7万", "comment_count": 7, "has_wordcloud": false}, {"id": 167, "title": "严浩翔新歌", "hot_value": 334885.0, "formatted_hot": "33.5万", "comment_count": 67, "has_wordcloud": false}, {"id": 261, "title": "孙颖莎vs巴约", "hot_value": 330844.0, "formatted_hot": "33.1万", "comment_count": 8, "has_wordcloud": false}, {"id": 234, "title": "五一排队现状", "hot_value": 330176.0, "formatted_hot": "33.0万", "comment_count": 49, "has_wordcloud": false}, {"id": 134, "title": "刘丁硕假期厕所直播翻车", "hot_value": 318019.0, "formatted_hot": "31.8万", "comment_count": 50, "has_wordcloud": false}, {"id": 135, "title": "五一假期真是捅人窝了吧", "hot_value": 317173.0, "formatted_hot": "31.7万", "comment_count": 7, "has_wordcloud": false}, {"id": 140, "title": "卢昱晓收藏与檀健次cp视频", "hot_value": 315059.0, "formatted_hot": "31.5万", "comment_count": 50, "has_wordcloud": false}, {"id": 235, "title": "狗狗未牵绳被碾压主人当场崩溃", "hot_value": 306662.0, "formatted_hot": "30.7万", "comment_count": 49, "has_wordcloud": false}, {"id": 136, "title": "被疑患癌男子称去其他医院检查正常", "hot_value": 306620.0, "formatted_hot": "30.7万", "comment_count": 9, "has_wordcloud": false}, {"id": 137, "title": "周也方要求hi6回应", "hot_value": 306619.0, "formatted_hot": "30.7万", "comment_count": 47, "has_wordcloud": false}, {"id": 138, "title": "张婧仪高度近视", "hot_value": 306617.0, "formatted_hot": "30.7万", "comment_count": 44, "has_wordcloud": false}, {"id": 139, "title": "1300斤牛走丢20天暴瘦200斤", "hot_value": 306604.0, "formatted_hot": "30.7万", "comment_count": 50, "has_wordcloud": false}, {"id": 105, "title": "我的猫终于干了我一直觉得她会干的事", "hot_value": 305532.0, "formatted_hot": "30.6万", "comment_count": 48, "has_wordcloud": false}, {"id": 141, "title": "严浩翔每年都会往宿舍搬几箱橙子", "hot_value": 302763.0, "formatted_hot": "30.3万", "comment_count": 42, "has_wordcloud": false}, {"id": 116, "title": "江语晨 浪姐厕女一", "hot_value": 302418.0, "formatted_hot": "30.2万", "comment_count": 22, "has_wordcloud": false}, {"id": 6, "title": "王菊卖700万房子给男友创业这段", "hot_value": 300633.0, "formatted_hot": "30.1万", "comment_count": 27, "has_wordcloud": false}, {"id": 142, "title": "原来这就是情感漠视吗", "hot_value": 298726.0, "formatted_hot": "29.9万", "comment_count": 50, "has_wordcloud": false}, {"id": 220, "title": "龚俊和蒙牛续杯青春", "hot_value": 293493.0, "formatted_hot": "29.3万", "comment_count": 48, "has_wordcloud": false}, {"id": 272, "title": "邮轮暴发致命病毒靠港求医遭拒", "hot_value": 292050.0, "formatted_hot": "29.2万", "comment_count": 3, "has_wordcloud": false}, {"id": 236, "title": "如何证明桃花源里的人都是近亲结婚", "hot_value": 285029.0, "formatted_hot": "28.5万", "comment_count": 50, "has_wordcloud": false}, {"id": 144, "title": "时代少年团 男团学", "hot_value": 284738.0, "formatted_hot": "28.5万", "comment_count": 35, "has_wordcloud": false}, {"id": 106, "title": "霸王茶姬水银事件反转", "hot_value": 283189.0, "formatted_hot": "28.3万", "comment_count": 14, "has_wordcloud": false}, {"id": 364, "title": "于正看短剧Enemy看哭了", "hot_value": 281578.0, "formatted_hot": "28.2万", "comment_count": 17, "has_wordcloud": false}, {"id": 266, "title": "侯明昊", "hot_value": 279560.0, "formatted_hot": "28.0万", "comment_count": 23, "has_wordcloud": false}, {"id": 145, "title": "tian闹剧结束了", "hot_value": 278591.0, "formatted_hot": "27.9万", "comment_count": 46, "has_wordcloud": false}, {"id": 109, "title": "西安上空现不明物持续一小时后消失", "hot_value": 275597.0, "formatted_hot": "27.6万", "comment_count": 48, "has_wordcloud": false}, {"id": 14, "title": "刘耀文你随便吧", "hot_value": 268457.0, "formatted_hot": "26.8万", "comment_count": 51, "has_wordcloud": false}, {"id": 110, "title": "胖东来正式起诉博主惊梦人", "hot_value": 268334.0, "formatted_hot": "26.8万", "comment_count": 14, "has_wordcloud": false}, {"id": 241, "title": "田曦薇你好威风啊", "hot_value": 266437.0, "formatted_hot": "26.6万", "comment_count": 16, "has_wordcloud": false}, {"id": 111, "title": "韩国艺人偷税漏税追缴款top5", "hot_value": 265181.0, "formatted_hot": "26.5万", "comment_count": 20, "has_wordcloud": false}, {"id": 113, "title": "有人为吃蜜雪9元圣代碗排队5小时", "hot_value": 256998.0, "formatted_hot": "25.7万", "comment_count": 50, "has_wordcloud": false}, {"id": 275, "title": "厄尔尼诺最快初夏登场", "hot_value": 255789.0, "formatted_hot": "25.6万", "comment_count": 5, "has_wordcloud": false}, {"id": 269, "title": "时代少年团演唱会下雨", "hot_value": 251602.0, "formatted_hot": "25.2万", "comment_count": 98, "has_wordcloud": false}, {"id": 130, "title": "严浩翔哭了", "hot_value": 250195.0, "formatted_hot": "25.0万", "comment_count": 178, "has_wordcloud": false}, {"id": 115, "title": "美国警告立陶宛", "hot_value": 246798.0, "formatted_hot": "24.7万", "comment_count": 47, "has_wordcloud": false}, {"id": 314, "title": "杨紫送谢娜演唱会花篮", "hot_value": 244487.0, "formatted_hot": "24.4万", "comment_count": 43, "has_wordcloud": false}, {"id": 117, "title": "严军发了一家四口照", "hot_value": 240437.0, "formatted_hot": "24.0万", "comment_count": 50, "has_wordcloud": false}, {"id": 146, "title": "日本地震", "hot_value": 240407.0, "formatted_hot": "24.0万", "comment_count": 44, "has_wordcloud": false}, {"id": 147, "title": "王橹杰高会", "hot_value": 239046.0, "formatted_hot": "23.9万", "comment_count": 36, "has_wordcloud": false}, {"id": 148, "title": "何洁前夫说前妻不是妻", "hot_value": 238561.0, "formatted_hot": "23.9万", "comment_count": 50, "has_wordcloud": false}, {"id": 149, "title": "一诺被开闪光灯", "hot_value": 237513.0, "formatted_hot": "23.8万", "comment_count": 49, "has_wordcloud": false}, {"id": 118, "title": "每个省都有自己的专属早餐", "hot_value": 237499.0, "formatted_hot": "23.7万", "comment_count": 49, "has_wordcloud": false}, {"id": 237, "title": "李飞头像是暴打老板", "hot_value": 236631.0, "formatted_hot": "23.7万", "comment_count": 13, "has_wordcloud": false}, {"id": 150, "title": "白鹿十周年见面会定档", "hot_value": 234275.0, "formatted_hot": "23.4万", "comment_count": 49, "has_wordcloud": false}, {"id": 238, "title": "白敬亭 宋轶", "hot_value": 232203.0, "formatted_hot": "23.2万", "comment_count": 47, "has_wordcloud": false}, {"id": 120, "title": "基础款macmini停售", "hot_value": 231267.0, "formatted_hot": "23.1万", "comment_count": 5, "has_wordcloud": false}, {"id": 239, "title": "公司引进AI后将员工降薪裁员", "hot_value": 229985.0, "formatted_hot": "23.0万", "comment_count": 14, "has_wordcloud": false}, {"id": 121, "title": "时隔五年我用ai复活了父亲", "hot_value": 228207.0, "formatted_hot": "22.8万", "comment_count": 7, "has_wordcloud": false}, {"id": 267, "title": "红果回应VIP付费", "hot_value": 226120.0, "formatted_hot": "22.6万", "comment_count": 63, "has_wordcloud": false}, {"id": 265, "title": "唐嫣演技", "hot_value": 225635.0, "formatted_hot": "22.6万", "comment_count": 55, "has_wordcloud": false}, {"id": 302, "title": "曾沛慈范玮琪合照", "hot_value": 225502.0, "formatted_hot": "22.6万", "comment_count": 78, "has_wordcloud": false}, {"id": 151, "title": "35岁男子反复口腔溃疡查出舌鳞癌", "hot_value": 225483.0, "formatted_hot": "22.5万", "comment_count": 1, "has_wordcloud": false}, {"id": 152, "title": "苏超南京vs常州", "hot_value": 224939.0, "formatted_hot": "22.5万", "comment_count": 49, "has_wordcloud": false}, {"id": 182, "title": "银河左岸 黄子弘凡镜头", "hot_value": 222558.0, "formatted_hot": "22.3万", "comment_count": 19, "has_wordcloud": false}, {"id": 122, "title": "张雪回应820rr赛道熄火", "hot_value": 222247.0, "formatted_hot": "22.2万", "comment_count": 50, "has_wordcloud": false}, {"id": 123, "title": "用ai把我家猫养在了电脑上", "hot_value": 218326.0, "formatted_hot": "21.8万", "comment_count": 50, "has_wordcloud": false}, {"id": 153, "title": "便利店被长相成熟未成年设套买烟", "hot_value": 216976.0, "formatted_hot": "21.7万", "comment_count": 48, "has_wordcloud": false}];
+        const eventWordclouds = {"427": {"path": "wordcloud_event_427.html", "title": "浏阳烟花厂爆炸致26死61伤", "hot_value": 12388935.0, "comment_count": 43}, "218": {"path": "wordcloud_event_218.html", "title": "用烧烤签给狗撸串顾客账号已私密", "hot_value": 2237331.0, "comment_count": 49}, "219": {"path": "wordcloud_event_219.html", "title": "心有热爱永远正值青春", "hot_value": 1791760.0, "comment_count": 42}, "429": {"path": "wordcloud_event_429.html", "title": "数字技术催生文旅新业态", "hot_value": 1700874.0, "comment_count": 5}, "97": {"path": "wordcloud_event_97.html", "title": "葛仙村度假区致歉", "hot_value": 1588876.0, "comment_count": 47}, "248": {"path": "wordcloud_event_248.html", "title": "浏阳烟花厂爆炸致3死25伤", "hot_value": 1433271.0, "comment_count": 36}, "127": {"path": "wordcloud_event_127.html", "title": "张雪机车再夺冠军", "hot_value": 1266208.0, "comment_count": 50}, "98": {"path": "wordcloud_event_98.html", "title": "世界杯转播权再现中国式僵局", "hot_value": 920811.0, "comment_count": 50}, "128": {"path": "wordcloud_event_128.html", "title": "张雪机车回应再次夺冠", "hot_value": 919319.0, "comment_count": 34}, "430": {"path": "wordcloud_event_430.html", "title": "导致脊柱侧弯的姿势都好舒服", "hot_value": 756919.0, "comment_count": 41}, "129": {"path": "wordcloud_event_129.html", "title": "95后把卡脖子难题变成咱的杀手锏", "hot_value": 709870.0, "comment_count": 14}, "431": {"path": "wordcloud_event_431.html", "title": "国内一年仅卖2763万台彩电", "hot_value": 680080.0, "comment_count": 50}, "221": {"path": "wordcloud_event_221.html", "title": "二十七八岁什么感觉", "hot_value": 656374.0, "comment_count": 50}, "101": {"path": "wordcloud_event_101.html", "title": "湘西赶尸舞", "hot_value": 644508.0, "comment_count": 50}, "222": {"path": "wordcloud_event_222.html", "title": "布洛芬头一回累晕菜了", "hot_value": 625893.0, "comment_count": 50}, "223": {"path": "wordcloud_event_223.html", "title": "高铁ABC座很暧昧", "hot_value": 555376.0, "comment_count": 49}, "433": {"path": "wordcloud_event_433.html", "title": "你根本没意识到自己有多年轻", "hot_value": 548717.0, "comment_count": 49}, "434": {"path": "wordcloud_event_434.html", "title": "白日梦我", "hot_value": 548292.0, "comment_count": 48}, "296": {"path": "wordcloud_event_296.html", "title": "浏阳烟花厂爆炸几百斤石头被炸飞", "hot_value": 515661.0, "comment_count": 53}, "103": {"path": "wordcloud_event_103.html", "title": "对自己不好的事别到处说", "hot_value": 493621.0, "comment_count": 47}};
+        let currentFilter = 'all';
+        let currentSort = 'hot';
+        let selectedEventId = null;
+
+        function renderEvents() {
+            const list = document.getElementById('eventsList');
+            list.innerHTML = '';
+
+            let events = [...allEvents];
+
+            // 应用筛选
+            if (currentFilter === 'has_wordcloud') {
+                events = events.filter(e => e.has_wordcloud);
+            }
+
+            // 应用搜索
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (searchTerm) {
+                events = events.filter(e => e.title.toLowerCase().includes(searchTerm));
+            }
+
+            // 应用排序
+            if (currentSort === 'hot') {
+                events.sort((a, b) => b.hot_value - a.hot_value);
+            } else if (currentSort === 'comments') {
+                events.sort((a, b) => b.comment_count - a.comment_count);
+            }
+
+            events.forEach(event => {
+                const card = document.createElement('div');
+                card.className = `event-card ${selectedEventId === event.id ? 'selected' : ''}`;
+                card.onclick = () => selectEvent(event.id);
+
+                card.innerHTML = `
+                    <div class="event-title">${event.title}</div>
+                    <div class="event-stats">
+                        <div class="event-stat">
+                            <span>🔥</span>
+                            <span class="hot-value">${event.formatted_hot}</span>
+                        </div>
+                        <div class="event-stat">
+                            <span>💬</span>
+                            <span>${event.comment_count}</span>
+                        </div>
+                        <div class="event-stat">
+                            <span>${event.has_wordcloud ? '✅' : '⚠️'}</span>
+                            <span>${event.has_wordcloud ? '已生成' : '未生成'}</span>
+                        </div>
+                    </div>
+                `;
+
+                list.appendChild(card);
+            });
+        }
+
+        function selectEvent(eventId) {
+            selectedEventId = eventId;
+            const frame = document.getElementById('chartFrame');
+            const title = document.getElementById('currentChartTitle');
+            const stats = document.getElementById('currentChartStats');
+
+            if (eventId && eventWordclouds[eventId]) {
+                frame.src = eventWordclouds[eventId].path;
+                title.textContent = '☁️ ' + eventWordclouds[eventId].title;
+                stats.textContent = `🔥 ${eventWordclouds[eventId].hot_value.toFixed(0)} | 💬 ${eventWordclouds[eventId].comment_count}`;
+            } else if (eventId) {
+                // 如果词云图未生成，显示提示
+                frame.src = 'about:blank';
+                frame.contentDocument.body.innerHTML = '<div style="text-align:center;padding:60px;color:#999;"><h3>该事件的词云图未生成</h3><p>请返回主程序重新生成</p></div>';
+                title.textContent = '☁️ 词云图未生成';
+                stats.textContent = '';
+            } else {
+                frame.src = 'wordcloud.html';
+                title.textContent = '☁️ 全部事件词云图';
+                stats.textContent = '';
+            }
+
+            renderEvents();
+        }
+
+        function showAllEvents() {
+            selectedEventId = null;
+            document.getElementById('searchInput').value = '';
+            const frame = document.getElementById('chartFrame');
+            const title = document.getElementById('currentChartTitle');
+            const stats = document.getElementById('currentChartStats');
+            frame.src = 'wordcloud.html';
+            title.textContent = '☁️ 全部事件词云图';
+            stats.textContent = '';
+            renderEvents();
+        }
+
+        function filterEvents() {
+            renderEvents();
+        }
+
+        function filterByType(type) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-tag').forEach(tag => tag.classList.remove('active'));
+            event.target.classList.add('active');
+            renderEvents();
+        }
+
+        function sortEvents(sortType) {
+            currentSort = sortType;
+            renderEvents();
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', renderEvents);
+    </script>
+</body>
+</html>

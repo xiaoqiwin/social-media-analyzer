@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三维关联分析：热度-传播-情感（备选方案）</title>
+
+    <!-- 引入ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', Arial, sans-serif;
+            background: #ffffff;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 头部 */
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 25px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .header h1 {
+            color: #1a1a1a;
+            font-size: 28px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header h1 .icon {
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 15px;
+        }
+
+        /* 控制面板 */
+        .control-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .control-section {
+            margin-bottom: 20px;
+        }
+
+        .control-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #e1e5e9;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: #f8f9fa;
+            border-color: #d0d7de;
+        }
+
+        .btn-primary {
+            background: #1890ff;
+            color: white;
+            border-color: #1890ff;
+        }
+
+        .btn-primary:hover {
+            background: #40a9ff;
+            border-color: #40a9ff;
+        }
+
+        .btn-success {
+            background: #52c41a;
+            color: white;
+            border-color: #52c41a;
+        }
+
+        .btn-success:hover {
+            background: #73d13d;
+            border-color: #73d13d;
+        }
+
+        .btn-warning {
+            background: #faad14;
+            color: white;
+            border-color: #faad14;
+        }
+
+        .btn-warning:hover {
+            background: #ffc53d;
+            border-color: #ffc53d;
+        }
+
+        .btn-danger {
+            background: #ff4d4f;
+            color: white;
+            border-color: #ff4d4f;
+        }
+
+        .btn-danger:hover {
+            background: #ff7875;
+            border-color: #ff7875;
+        }
+
+        /* 事件选择器 */
+        .event-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+
+        .event-card {
+            background: white;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .event-card:hover {
+            border-color: #1890ff;
+            box-shadow: 0 4px 12px rgba(24, 144, 255, 0.1);
+        }
+
+        .event-card.selected {
+            border-color: #1890ff;
+            background: #f0f7ff;
+        }
+
+        .event-card.positive {
+            border-left: 4px solid #52c41a;
+        }
+
+        .event-card.negative {
+            border-left: 4px solid #ff4d4f;
+        }
+
+        .event-card.neutral {
+            border-left: 4px solid #faad14;
+        }
+
+        .event-checkbox {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #d9d9d9;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .event-checkbox.checked {
+            background: #1890ff;
+            border-color: #1890ff;
+        }
+
+        .event-checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 12px;
+        }
+
+        .event-title {
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 15px;
+            padding-right: 25px;
+        }
+
+        .event-stats {
+            display: flex;
+            gap: 12px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .event-stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .hot-value {
+            color: #1890ff;
+            font-weight: 600;
+        }
+
+        .comment-count {
+            color: #722ed1;
+            font-weight: 600;
+        }
+
+        .sentiment-badge {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .sentiment-positive {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+
+        .sentiment-negative {
+            background: #fff2f0;
+            color: #ff4d4f;
+        }
+
+        .sentiment-neutral {
+            background: #fffbe6;
+            color: #faad14;
+        }
+
+        /* 统计栏 */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .stat-positive {
+            color: #52c41a;
+        }
+
+        .stat-negative {
+            color: #ff4d4f;
+        }
+
+        .stat-neutral {
+            color: #faad14;
+        }
+
+        /* 洞察面板 */
+        .insight-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .insight-content {
+            line-height: 1.8;
+        }
+
+        .insight-highlight {
+            font-weight: 600;
+            color: #1890ff;
+        }
+
+        .insight-warning {
+            color: #ff4d4f;
+            font-weight: 600;
+        }
+
+        /* 图表容器 */
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #mainChart {
+            width: 100%;
+            height: 500px;
+        }
+
+        /* 图例 */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .legend-positive {
+            background: #52c41a;
+        }
+
+        .legend-negative {
+            background: #ff4d4f;
+        }
+
+        .legend-neutral {
+            background: #faad14;
+        }
+
+        /* 底部信息 */
+        .footer {
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+            margin-top: 20px;
+            padding: 20px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .event-selector {
+                grid-template-columns: 1fr;
+            }
+
+            .control-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .stats-bar {
+                grid-template-columns: 1fr;
+            }
+
+            #mainChart {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>
+                <span class="icon">📊</span>
+                三维关联分析：热度-传播-情感（备选方案）
+            </h1>
+            <p class="subtitle">支持交互式事件对比分析 | 数据更新时间: 2026-05-05 18:45:59</p>
+        </div>
+
+        <!-- 控制面板 -->
+        <div class="control-panel">
+            <!-- 批量操作 -->
+            <div class="control-section">
+                <div class="section-title">
+                    <span>🔧</span>
+                    批量操作
+                </div>
+                <div class="control-buttons">
+                    <button class="btn btn-primary" onclick="selectAll()">
+                        <span>✓</span>
+                        全选
+                    </button>
+                    <button class="btn btn-danger" onclick="deselectAll()">
+                        <span>✕</span>
+                        取消全选
+                    </button>
+                    <button class="btn btn-success" onclick="selectTop10()">
+                        <span>🏆</span>
+                        选中TOP10
+                    </button>
+                </div>
+            </div>
+
+            <!-- 排序选项 -->
+            <div class="control-section">
+                <div class="section-title">
+                    <span>📈</span>
+                    排序方式
+                </div>
+                <div class="control-buttons">
+                    <button class="btn" onclick="sortByHot()">
+                        <span>🔥</span>
+                        按热度排序
+                    </button>
+                    <button class="btn" onclick="sortByComments()">
+                        <span>💬</span>
+                        按评论数排序
+                    </button>
+                </div>
+            </div>
+
+            <!-- 事件选择器 -->
+            <div class="control-section">
+                <div class="section-title">
+                    <span>🎯</span>
+                    事件选择器
+                </div>
+                <div class="event-selector" id="eventSelector">
+                    <!-- 事件卡片将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计栏 -->
+        <div class="stats-bar" id="statsBar">
+            <!-- 统计卡片将通过JavaScript动态生成 -->
+        </div>
+
+        <!-- 洞察面板 -->
+        <div class="insight-panel">
+            <div class="section-title">
+                <span>💡</span>
+                智能洞察
+            </div>
+            <div class="insight-content" id="insightContent">
+                <!-- 洞察内容将通过JavaScript动态生成 -->
+            </div>
+        </div>
+
+        <!-- 主图表 -->
+        <div class="chart-container">
+            <div class="chart-title">
+                <span>📊</span>
+                热度-传播-情感三维关联分析
+            </div>
+            <div id="mainChart"></div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color legend-positive"></div>
+                    <span>正面主导</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-negative"></div>
+                    <span>负面主导</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-neutral"></div>
+                    <span>中性主导</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部信息 -->
+        <div class="footer">
+            <p>© 2026 社交媒体热点话题分析系统 | 三维关联分析工具 v1.0</p>
+            <p>使用ECharts生成，支持交互式操作 | 生成时间: 2026-05-05 18:45:59</p>
+        </div>
+    </div>
+
+    <!-- 事件数据 -->
+    <script>
+        // 事件数据
+        const allEvents = [{"id": 427, "title": "浏阳烟花厂爆炸致26死61伤", "display_title": "浏阳烟花厂爆炸致...", "hot_value": 12388935.0, "formatted_hot": "1238.9万", "comment_count": 43, "positive_ratio": 30.232558139534884, "negative_ratio": 46.51162790697674, "neutral_ratio": 23.25581395348837, "dominant": "negative"}, {"id": 218, "title": "用烧烤签给狗撸串顾客账号已私密", "display_title": "用烧烤签给狗撸串...", "hot_value": 2237331.0, "formatted_hot": "223.7万", "comment_count": 49, "positive_ratio": 28.571428571428573, "negative_ratio": 57.142857142857146, "neutral_ratio": 14.285714285714286, "dominant": "negative"}, {"id": 219, "title": "心有热爱永远正值青春", "display_title": "心有热爱永远正值...", "hot_value": 1791760.0, "formatted_hot": "179.2万", "comment_count": 42, "positive_ratio": 90.47619047619048, "negative_ratio": 7.142857142857143, "neutral_ratio": 2.380952380952381, "dominant": "positive"}, {"id": 429, "title": "数字技术催生文旅新业态", "display_title": "数字技术催生文旅...", "hot_value": 1700874.0, "formatted_hot": "170.1万", "comment_count": 5, "positive_ratio": 40.0, "negative_ratio": 40.0, "neutral_ratio": 20.0, "dominant": "positive"}, {"id": 97, "title": "葛仙村度假区致歉", "display_title": "葛仙村度假区致歉", "hot_value": 1588876.0, "formatted_hot": "158.9万", "comment_count": 47, "positive_ratio": 34.04255319148936, "negative_ratio": 44.680851063829785, "neutral_ratio": 21.27659574468085, "dominant": "negative"}, {"id": 248, "title": "浏阳烟花厂爆炸致3死25伤", "display_title": "浏阳烟花厂爆炸致...", "hot_value": 1433271.0, "formatted_hot": "143.3万", "comment_count": 36, "positive_ratio": 36.111111111111114, "negative_ratio": 33.333333333333336, "neutral_ratio": 30.555555555555557, "dominant": "positive"}, {"id": 127, "title": "张雪机车再夺冠军", "display_title": "张雪机车再夺冠军", "hot_value": 1266208.0, "formatted_hot": "126.6万", "comment_count": 50, "positive_ratio": 58.0, "negative_ratio": 24.0, "neutral_ratio": 18.0, "dominant": "positive"}, {"id": 98, "title": "世界杯转播权再现中国式僵局", "display_title": "世界杯转播权再现...", "hot_value": 920811.0, "formatted_hot": "92.1万", "comment_count": 50, "positive_ratio": 42.0, "negative_ratio": 44.0, "neutral_ratio": 14.0, "dominant": "negative"}, {"id": 128, "title": "张雪机车回应再次夺冠", "display_title": "张雪机车回应再次...", "hot_value": 919319.0, "formatted_hot": "91.9万", "comment_count": 34, "positive_ratio": 50.0, "negative_ratio": 26.470588235294116, "neutral_ratio": 23.529411764705884, "dominant": "positive"}, {"id": 430, "title": "导致脊柱侧弯的姿势都好舒服", "display_title": "导致脊柱侧弯的姿...", "hot_value": 756919.0, "formatted_hot": "75.7万", "comment_count": 41, "positive_ratio": 63.41463414634146, "negative_ratio": 21.951219512195124, "neutral_ratio": 14.634146341463415, "dominant": "positive"}, {"id": 129, "title": "95后把卡脖子难题变成咱的杀手锏", "display_title": "95后把卡脖子难...", "hot_value": 709870.0, "formatted_hot": "71.0万", "comment_count": 14, "positive_ratio": 71.42857142857143, "negative_ratio": 7.142857142857143, "neutral_ratio": 21.428571428571427, "dominant": "positive"}, {"id": 431, "title": "国内一年仅卖2763万台彩电", "display_title": "国内一年仅卖27...", "hot_value": 680080.0, "formatted_hot": "68.0万", "comment_count": 50, "positive_ratio": 34.0, "negative_ratio": 50.0, "neutral_ratio": 16.0, "dominant": "negative"}, {"id": 221, "title": "二十七八岁什么感觉", "display_title": "二十七八岁什么感...", "hot_value": 656374.0, "formatted_hot": "65.6万", "comment_count": 50, "positive_ratio": 52.0, "negative_ratio": 18.0, "neutral_ratio": 30.0, "dominant": "positive"}, {"id": 101, "title": "湘西赶尸舞", "display_title": "湘西赶尸舞", "hot_value": 644508.0, "formatted_hot": "64.5万", "comment_count": 50, "positive_ratio": 68.0, "negative_ratio": 20.0, "neutral_ratio": 12.0, "dominant": "positive"}, {"id": 222, "title": "布洛芬头一回累晕菜了", "display_title": "布洛芬头一回累晕...", "hot_value": 625893.0, "formatted_hot": "62.6万", "comment_count": 50, "positive_ratio": 40.0, "negative_ratio": 44.0, "neutral_ratio": 16.0, "dominant": "negative"}, {"id": 223, "title": "高铁ABC座很暧昧", "display_title": "高铁ABC座很暧...", "hot_value": 555376.0, "formatted_hot": "55.5万", "comment_count": 49, "positive_ratio": 42.857142857142854, "negative_ratio": 42.857142857142854, "neutral_ratio": 14.285714285714286, "dominant": "positive"}, {"id": 433, "title": "你根本没意识到自己有多年轻", "display_title": "你根本没意识到自...", "hot_value": 548717.0, "formatted_hot": "54.9万", "comment_count": 49, "positive_ratio": 77.55102040816327, "negative_ratio": 16.3265306122449, "neutral_ratio": 6.122448979591836, "dominant": "positive"}, {"id": 434, "title": "白日梦我", "display_title": "白日梦我", "hot_value": 548292.0, "formatted_hot": "54.8万", "comment_count": 48, "positive_ratio": 37.5, "negative_ratio": 50.0, "neutral_ratio": 12.5, "dominant": "negative"}, {"id": 296, "title": "浏阳烟花厂爆炸几百斤石头被炸飞", "display_title": "浏阳烟花厂爆炸几...", "hot_value": 515661.0, "formatted_hot": "51.6万", "comment_count": 53, "positive_ratio": 49.056603773584904, "negative_ratio": 35.84905660377358, "neutral_ratio": 15.09433962264151, "dominant": "positive"}, {"id": 103, "title": "对自己不好的事别到处说", "display_title": "对自己不好的事别...", "hot_value": 493621.0, "formatted_hot": "49.4万", "comment_count": 47, "positive_ratio": 48.93617021276596, "negative_ratio": 38.297872340425535, "neutral_ratio": 12.76595744680851, "dominant": "positive"}, {"id": 131, "title": "追星女的手机密码人尽皆知", "display_title": "追星女的手机密码...", "hot_value": 475451.0, "formatted_hot": "47.5万", "comment_count": 50, "positive_ratio": 28.0, "negative_ratio": 18.0, "neutral_ratio": 54.0, "dominant": "neutral"}, {"id": 172, "title": "单依纯草莓音乐节", "display_title": "单依纯草莓音乐节", "hot_value": 451972.0, "formatted_hot": "45.2万", "comment_count": 45, "positive_ratio": 77.77777777777777, "negative_ratio": 6.666666666666667, "neutral_ratio": 15.555555555555555, "dominant": "positive"}, {"id": 27, "title": "白鹿摘了姚译添眼镜给自己戴", "display_title": "白鹿摘了姚译添眼...", "hot_value": 447414.0, "formatted_hot": "44.7万", "comment_count": 5, "positive_ratio": 80.0, "negative_ratio": 0.0, "neutral_ratio": 20.0, "dominant": "positive"}, {"id": 164, "title": "白鹿被孟子义说挂相", "display_title": "白鹿被孟子义说挂...", "hot_value": 443773.0, "formatted_hot": "44.4万", "comment_count": 97, "positive_ratio": 61.855670103092784, "negative_ratio": 22.68041237113402, "neutral_ratio": 15.463917525773196, "dominant": "positive"}, {"id": 160, "title": "黄灿灿 blackpink都没这么累", "display_title": "黄灿灿 blac...", "hot_value": 438257.0, "formatted_hot": "43.8万", "comment_count": 19, "positive_ratio": 84.21052631578948, "negative_ratio": 0.0, "neutral_ratio": 15.789473684210526, "dominant": "positive"}, {"id": 224, "title": "前男友香辣蟹", "display_title": "前男友香辣蟹", "hot_value": 421868.0, "formatted_hot": "42.2万", "comment_count": 50, "positive_ratio": 40.0, "negative_ratio": 34.0, "neutral_ratio": 26.0, "dominant": "positive"}, {"id": 25, "title": "刘耀文solo好牛", "display_title": "刘耀文solo好...", "hot_value": 408043.0, "formatted_hot": "40.8万", "comment_count": 34, "positive_ratio": 61.76470588235294, "negative_ratio": 8.823529411764707, "neutral_ratio": 29.41176470588235, "dominant": "positive"}, {"id": 104, "title": "余华辅导儿子语文后考试不及格", "display_title": "余华辅导儿子语文...", "hot_value": 398106.0, "formatted_hot": "39.8万", "comment_count": 47, "positive_ratio": 76.59574468085107, "negative_ratio": 17.02127659574468, "neutral_ratio": 6.382978723404255, "dominant": "positive"}, {"id": 114, "title": "鹿晗没带馒头参加五哈的原因", "display_title": "鹿晗没带馒头参加...", "hot_value": 396719.0, "formatted_hot": "39.7万", "comment_count": 13, "positive_ratio": 69.23076923076923, "negative_ratio": 15.384615384615385, "neutral_ratio": 15.384615384615385, "dominant": "positive"}, {"id": 132, "title": "张婧仪方要求你好星期六道歉", "display_title": "张婧仪方要求你好...", "hot_value": 389159.0, "formatted_hot": "38.9万", "comment_count": 11, "positive_ratio": 9.090909090909092, "negative_ratio": 81.81818181818181, "neutral_ratio": 9.090909090909092, "dominant": "negative"}];
+
+        // 选中的事件ID
+        let selectedEventIds = [];
+
+        // 排序状态
+        let currentSort = 'hot'; // 'hot' 或 'comments'
+
+        // 初始化函数
+        function init() {
+            // 默认选中TOP10
+            selectTop10();
+
+            // 渲染事件选择器
+            renderEventSelector();
+
+            // 渲染统计栏
+            renderStatsBar();
+
+            // 渲染洞察面板
+            renderInsightPanel();
+
+            // 渲染图表
+            renderChart();
+
+            // 添加窗口大小变化监听
+            window.addEventListener('resize', function() {
+                if (window.chartInstance) {
+                    window.chartInstance.resize();
+                }
+            });
+        }
+
+        // 渲染事件选择器
+        function renderEventSelector() {
+            const selector = document.getElementById('eventSelector');
+            selector.innerHTML = '';
+
+            // 根据当前排序状态排序事件
+            const sortedEvents = [...allEvents];
+            if (currentSort === 'hot') {
+                sortedEvents.sort((a, b) => b.hot_value - a.hot_value);
+            } else {
+                sortedEvents.sort((a, b) => b.comment_count - a.comment_count);
+            }
+
+            sortedEvents.forEach(event => {
+                const isSelected = selectedEventIds.includes(event.id);
+
+                // 确定情感标签和颜色
+                let sentimentLabel, sentimentClass, sentimentColor;
+                if (event.dominant === 'positive') {
+                    sentimentLabel = '正面';
+                    sentimentClass = 'sentiment-positive';
+                    sentimentColor = '#52c41a';
+                } else if (event.dominant === 'negative') {
+                    sentimentLabel = '负面';
+                    sentimentClass = 'sentiment-negative';
+                    sentimentColor = '#ff4d4f';
+                } else {
+                    sentimentLabel = '中性';
+                    sentimentClass = 'sentiment-neutral';
+                    sentimentColor = '#faad14';
+                }
+
+                const card = document.createElement('div');
+                card.className = `event-card ${event.dominant} ${isSelected ? 'selected' : ''}`;
+                card.onclick = () => toggleEvent(event.id);
+                card.title = event.title;
+
+                card.innerHTML = `
+                    <div class="event-checkbox ${isSelected ? 'checked' : ''}"></div>
+                    <div class="event-title">${event.display_title}</div>
+                    <div class="event-stats">
+                        <div class="event-stat">
+                            <span>🔥</span>
+                            <span class="hot-value">${event.formatted_hot}</span>
+                        </div>
+                        <div class="event-stat">
+                            <span>💬</span>
+                            <span class="comment-count">${event.comment_count}</span>
+                        </div>
+                        <div class="event-stat">
+                            <span>📊</span>
+                            <span class="sentiment-badge ${sentimentClass}">${sentimentLabel}</span>
+                        </div>
+                    </div>
+                `;
+
+                selector.appendChild(card);
+            });
+        }
+
+        // 渲染统计栏
+        function renderStatsBar() {
+            const statsBar = document.getElementById('statsBar');
+            const selectedEvents = allEvents.filter(e => selectedEventIds.includes(e.id));
+
+            if (selectedEvents.length === 0) {
+                statsBar.innerHTML = '<div class="stat-card"><div class="stat-value">0</div><div class="stat-label">请选择至少一个事件进行分析</div></div>';
+                return;
+            }
+
+            // 计算统计指标
+            const totalEvents = selectedEvents.length;
+            const totalComments = selectedEvents.reduce((sum, e) => sum + e.comment_count, 0);
+            const avgHotValue = selectedEvents.reduce((sum, e) => sum + e.hot_value, 0) / totalEvents;
+            const avgPositiveRatio = selectedEvents.reduce((sum, e) => sum + e.positive_ratio, 0) / totalEvents;
+
+            const positiveEvents = selectedEvents.filter(e => e.dominant === 'positive').length;
+            const negativeEvents = selectedEvents.filter(e => e.dominant === 'negative').length;
+            const neutralEvents = selectedEvents.filter(e => e.dominant === 'neutral').length;
+
+            statsBar.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${totalEvents}</div>
+                    <div class="stat-label">选中事件数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${totalComments}</div>
+                    <div class="stat-label">总评论数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${avgHotValue.toFixed(0)}</div>
+                    <div class="stat-label">平均热度</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value stat-positive">${avgPositiveRatio.toFixed(1)}%</div>
+                    <div class="stat-label">平均正面占比</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value stat-positive">${positiveEvents}</div>
+                    <div class="stat-label">正面事件</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value stat-negative">${negativeEvents}</div>
+                    <div class="stat-label">负面事件</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value stat-neutral">${neutralEvents}</div>
+                    <div class="stat-label">中性事件</div>
+                </div>
+            `;
+        }
+
+        // 渲染洞察面板
+        function renderInsightPanel() {
+            const insightContent = document.getElementById('insightContent');
+            const selectedEvents = allEvents.filter(e => selectedEventIds.includes(e.id));
+
+            if (selectedEvents.length === 0) {
+                insightContent.innerHTML = '<p>请选择至少一个事件进行分析，获取智能洞察。</p>';
+                return;
+            }
+
+            if (selectedEvents.length < 2) {
+                insightContent.innerHTML = '<p>请选择至少2个事件进行对比分析。</p>';
+                return;
+            }
+
+            // 找出最高热度事件
+            const maxHotEvent = [...selectedEvents].sort((a, b) => b.hot_value - a.hot_value)[0];
+
+            // 找出最高传播事件
+            const maxCommentEvent = [...selectedEvents].sort((a, b) => b.comment_count - a.comment_count)[0];
+
+            // 统计正面/负面事件
+            const positiveEvents = selectedEvents.filter(e => e.dominant === 'positive');
+            const negativeEvents = selectedEvents.filter(e => e.dominant === 'negative');
+            const neutralEvents = selectedEvents.filter(e => e.dominant === 'neutral');
+
+            // 找出高热度负面事件
+            const highHotNegativeEvents = negativeEvents.filter(e => e.hot_value > 10000);
+
+            // 生成洞察文本
+            let insightHTML = '<p>';
+
+            // 1. 总体情况
+            insightHTML += `当前选中 <span class="insight-highlight">${selectedEvents.length}个事件</span>进行分析。`;
+
+            // 2. 最高热度事件
+            insightHTML += ` 其中<span class="insight-highlight">"${maxHotEvent.display_title}"</span>热度最高(${maxHotEvent.formatted_hot})，`;
+
+            // 3. 最高传播事件
+            if (maxCommentEvent.id !== maxHotEvent.id) {
+                insightHTML += `<span class="insight-highlight">"${maxCommentEvent.display_title}"</span>讨论最热烈(${maxCommentEvent.comment_count}条评论)，`;
+            }
+
+            // 4. 情感分布
+            insightHTML += ` 从情感分布看，正面事件${positiveEvents.length}个，负面事件${negativeEvents.length}个，中性事件${neutralEvents.length}个。`;
+
+            // 5. 高热度负面事件预警
+            if (highHotNegativeEvents.length > 0) {
+                insightHTML += ` <span class="insight-warning">⚠️ 发现${highHotNegativeEvents.length}个高热度负面事件，需重点关注！</span>`;
+            }
+
+            insightHTML += '</p>';
+
+            // 6. 情感与热度关联
+            if (negativeEvents.length > 0) {
+                const avgNegativeHot = negativeEvents.reduce((sum, e) => sum + e.hot_value, 0) / negativeEvents.length;
+                const avgAllHot = selectedEvents.reduce((sum, e) => sum + e.hot_value, 0) / selectedEvents.length;
+
+                if (avgNegativeHot > avgAllHot) {
+                    insightHTML += `<p>负面事件平均热度(${avgNegativeHot.toFixed(0)})高于整体平均(${avgAllHot.toFixed(0)})，说明负面情绪更容易引发高关注。</p>`;
+                }
+            }
+
+            // 7. 传播与情感关联
+            if (positiveEvents.length > 0 && negativeEvents.length > 0) {
+                const avgPositiveComments = positiveEvents.reduce((sum, e) => sum + e.comment_count, 0) / positiveEvents.length;
+                const avgNegativeComments = negativeEvents.reduce((sum, e) => sum + e.comment_count, 0) / negativeEvents.length;
+
+                if (avgNegativeComments > avgPositiveComments) {
+                    insightHTML += `<p>负面事件平均评论数(${avgNegativeComments.toFixed(0)})高于正面事件(${avgPositiveComments.toFixed(0)})，负面情绪更容易引发讨论。</p>`;
+                }
+            }
+
+            insightContent.innerHTML = insightHTML;
+        }
+
+        // 渲染图表
+        function renderChart() {
+            const selectedEvents = allEvents.filter(e => selectedEventIds.includes(e.id));
+
+            if (selectedEvents.length === 0) {
+                document.getElementById('mainChart').innerHTML = '<div style="text-align: center; padding: 50px; color: #999;">请选择至少一个事件进行图表分析</div>';
+                return;
+            }
+
+            // 根据当前排序状态排序选中的事件
+            const chartEvents = [...selectedEvents];
+            if (currentSort === 'hot') {
+                chartEvents.sort((a, b) => b.hot_value - a.hot_value);
+            } else {
+                chartEvents.sort((a, b) => b.comment_count - a.comment_count);
+            }
+
+            // 准备图表数据
+            const xAxisData = chartEvents.map(e => {
+                // X轴标签：事件标题 + 热度值
+                return e.display_title + '\n(' + e.formatted_hot + ')';
+            });
+
+            const seriesData = chartEvents.map(e => {
+                // 柱高：评论数
+                // 颜色：根据主导情感
+                let color;
+                if (e.dominant === 'positive') {
+                    color = '#52c41a';
+                } else if (e.dominant === 'negative') {
+                    color = '#ff4d4f';
+                } else {
+                    color = '#faad14';
+                }
+
+                return {
+                    value: e.comment_count,
+                    itemStyle: {
+                        color: color,
+                        borderRadius: [4, 4, 0, 0]  // 顶部圆角
+                    },
+                    // tooltip数据
+                    eventId: e.id,
+                    title: e.title,
+                    hotValue: e.hot_value,
+                    formattedHot: e.formatted_hot,
+                    commentCount: e.comment_count,
+                    positiveRatio: e.positive_ratio,
+                    negativeRatio: e.negative_ratio,
+                    neutralRatio: e.neutral_ratio,
+                    dominant: e.dominant
+                };
+            });
+
+            // 初始化ECharts实例
+            const chartDom = document.getElementById('mainChart');
+            if (window.chartInstance) {
+                window.chartInstance.dispose();
+            }
+            window.chartInstance = echarts.init(chartDom);
+
+            // 配置项
+            const option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: function(params) {
+                        const data = params.data;
+                        let sentimentLabel = '';
+                        if (data.dominant === 'positive') {
+                            sentimentLabel = '正面主导';
+                        } else if (data.dominant === 'negative') {
+                            sentimentLabel = '负面主导';
+                        } else {
+                            sentimentLabel = '中性主导';
+                        }
+
+                        return `
+                            <div style="font-weight: bold; margin-bottom: 8px;">${data.title}</div>
+                            <div>🔥 热度: ${data.formattedHot} (${data.hotValue.toFixed(0)})</div>
+                            <div>💬 评论数: ${data.commentCount}</div>
+                            <div>📊 情感分布:</div>
+                            <div>  - 正面: ${data.positiveRatio.toFixed(1)}%</div>
+                            <div>  - 负面: ${data.negativeRatio.toFixed(1)}%</div>
+                            <div>  - 中性: ${data.neutralRatio.toFixed(1)}%</div>
+                            <div>🎯 主导情感: ${sentimentLabel}</div>
+                        `;
+                    },
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    borderColor: '#e1e5e9',
+                    borderWidth: 1,
+                    textStyle: {
+                        color: '#333',
+                        fontSize: 13
+                    },
+                    extraCssText: 'box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 6px;'
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '10%',
+                    top: '10%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: xAxisData,
+                    axisLabel: {
+                        color: '#666',
+                        fontSize: 12,
+                        interval: 0,
+                        formatter: function(value) {
+                            // 处理换行显示
+                            return value.split('\\n').join('\n');
+                        },
+                        lineHeight: 16
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: '#e1e5e9'
+                        }
+                    },
+                    axisTick: {
+                        alignWithLabel: true
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '评论数（传播量）',
+                    nameTextStyle: {
+                        color: '#666',
+                        fontSize: 13
+                    },
+                    axisLabel: {
+                        color: '#666',
+                        fontSize: 12
+                    },
+                    axisLine: {
+                        show: true,
+                        lineStyle: {
+                            color: '#e1e5e9'
+                        }
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: '#f0f0f0',
+                            type: 'dashed'
+                        }
+                    }
+                },
+                series: [
+                    {
+                        name: '评论数',
+                        type: 'bar',
+                        barWidth: '60%',
+                        data: seriesData,
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: '{c}',
+                            color: '#333',
+                            fontSize: 12
+                        },
+                        emphasis: {
+                            itemStyle: {
+                                shadowColor: 'rgba(0, 0, 0, 0.5)',
+                                shadowBlur: 10
+                            }
+                        }
+                    }
+                ],
+                dataZoom: [
+                    {
+                        type: 'inside',
+                        xAxisIndex: 0,
+                        start: 0,
+                        end: 100
+                    },
+                    {
+                        show: true,
+                        xAxisIndex: 0,
+                        type: 'slider',
+                        bottom: 20,
+                        start: 0,
+                        end: 100,
+                        height: 20,
+                        backgroundColor: '#f0f0f0',
+                        fillerColor: 'rgba(24, 144, 255, 0.2)',
+                        borderColor: '#e1e5e9',
+                        textStyle: {
+                            color: '#666',
+                            fontSize: 12
+                        }
+                    }
+                ]
+            };
+
+            // 使用配置项和数据显示图表
+            window.chartInstance.setOption(option);
+        }
+
+        // 切换事件选择
+        function toggleEvent(eventId) {
+            const index = selectedEventIds.indexOf(eventId);
+            if (index === -1) {
+                selectedEventIds.push(eventId);
+            } else {
+                selectedEventIds.splice(index, 1);
+            }
+
+            // 重新渲染所有组件
+            renderEventSelector();
+            renderStatsBar();
+            renderInsightPanel();
+            renderChart();
+        }
+
+        // 全选
+        function selectAll() {
+            selectedEventIds = allEvents.map(e => e.id);
+            renderEventSelector();
+            renderStatsBar();
+            renderInsightPanel();
+            renderChart();
+        }
+
+        // 取消全选
+        function deselectAll() {
+            selectedEventIds = [];
+            renderEventSelector();
+            renderStatsBar();
+            renderInsightPanel();
+            renderChart();
+        }
+
+        // 选中TOP10
+        function selectTop10() {
+            // 按热度排序，取前10个
+            const top10Events = [...allEvents]
+                .sort((a, b) => b.hot_value - a.hot_value)
+                .slice(0, 10)
+                .map(e => e.id);
+
+            selectedEventIds = top10Events;
+            currentSort = 'hot';
+            renderEventSelector();
+            renderStatsBar();
+            renderInsightPanel();
+            renderChart();
+        }
+
+        // 按热度排序
+        function sortByHot() {
+            currentSort = 'hot';
+            renderEventSelector();
+            renderChart();
+        }
+
+        // 按评论数排序
+        function sortByComments() {
+            currentSort = 'comments';
+            renderEventSelector();
+            renderChart();
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
