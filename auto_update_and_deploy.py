@@ -113,10 +113,51 @@ def setup_remote(project_dir, repo_url):
         return False
 
 
+def ensure_branch_exists(project_dir, branch_name):
+    """确保分支存在，如果不存在则创建"""
+    # 检查当前分支
+    success, stdout, _ = run_command("git branch --show-current", cwd=project_dir)
+    current_branch = stdout.strip() if success else ""
+    
+    if not current_branch:
+        # 没有分支，创建新分支
+        print(f"📝 创建 {branch_name} 分支...")
+        success, _, stderr = run_command(
+            f"git checkout -b {branch_name}",
+            cwd=project_dir
+        )
+        if success:
+            print(f"✅ 分支 {branch_name} 创建成功")
+            return True
+        else:
+            print(f"❌ 创建分支失败: {stderr}")
+            return False
+    elif current_branch != branch_name:
+        # 切换到目标分支
+        print(f"📝 切换到 {branch_name} 分支...")
+        success, _, stderr = run_command(
+            f"git checkout -b {branch_name}",
+            cwd=project_dir
+        )
+        if success:
+            print(f"✅ 已切换到 {branch_name} 分支")
+            return True
+        else:
+            print(f"❌ 切换分支失败: {stderr}")
+            return False
+    else:
+        print(f"✅ 当前已在 {branch_name} 分支")
+        return True
+
+
 def commit_and_push(project_dir, message=None):
     """提交并推送代码到GitHub"""
     if message is None:
         message = f"更新数据: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+
+    # 确保分支存在
+    if not ensure_branch_exists(project_dir, BRANCH):
+        return False
 
     # 添加所有更改
     print("📝 添加更改到暂存区...")
@@ -157,23 +198,25 @@ def commit_and_push(project_dir, message=None):
     # 推送到远程
     print(f"📝 推送到远程仓库 ({BRANCH}分支)...")
     success, _, stderr = run_command(
-        f"git push origin {BRANCH}",
+        f"git push -u origin {BRANCH}",
         cwd=project_dir
     )
     if success:
         print("✅ 推送成功！")
         return True
     else:
-        # 尝试设置上游分支后推送
+        print(f"❌ 推送失败: {stderr}")
+        # 尝试强制推送（仅首次）
+        print("📝 尝试强制推送...")
         success, _, stderr = run_command(
-            f"git push -u origin {BRANCH}",
+            f"git push -u origin {BRANCH} --force",
             cwd=project_dir
         )
         if success:
-            print("✅ 推送成功！")
+            print("✅ 强制推送成功！")
             return True
         else:
-            print(f"❌ 推送失败: {stderr}")
+            print(f"❌ 强制推送也失败: {stderr}")
             return False
 
 
