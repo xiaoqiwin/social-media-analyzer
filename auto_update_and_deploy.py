@@ -238,7 +238,7 @@ def deploy():
     project_dir = os.path.dirname(os.path.abspath(__file__))
     print(f"📁 项目目录: {project_dir}")
     print(f"🔗 GitHub仓库: {GITHUB_REPO_URL}")
-    print(f"🌐 Netlify网站: https://deluxe-zabaione-3721cb.netlify.app/")
+    print(f"🌐 Netlify网站: https://social-mediaanalyzer.netlify.app/")
     print("=" * 60)
 
     # 检查Git
@@ -280,7 +280,7 @@ def deploy():
     if commit_and_push(project_dir):
         print("\n" + "=" * 60)
         print("🎉 部署完成！")
-        print(f"🌐 网站地址: https://deluxe-zabaione-3721cb.netlify.app/")
+        print(f"🌐 网站地址: https://social-mediaanalyzer.netlify.app/")
         print("⏱️  Netlify部署通常需要1-2分钟")
         print("=" * 60)
         return True

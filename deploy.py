@@ -154,7 +154,7 @@ def deploy():
     if commit_and_push(project_dir):
         print("\n" + "=" * 60)
         print("🎉 部署完成！")
-        print(f"🌐 网站地址: https://deluxe-zabaione-3721cb.netlify.app/")
+        print(f"🌐 网站地址: https://social-mediaanalyzer.netlify.app/")
         print("⏱️  Netlify部署通常需要1-2分钟")
         print("=" * 60)
         return True

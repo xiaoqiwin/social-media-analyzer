@@ -334,7 +334,7 @@ class SocialMediaHotspotSystem:
             if success:
                 print("\n✅ 部署成功！")
                 print("   网站将在1-2分钟后自动更新")
-                print("   访问地址: https://deluxe-zabaione-3721cb.netlify.app/")
+                print("   访问地址: https://social-mediaanalyzer.netlify.app/")
             else:
                 print("\n❌ 部署失败，请检查错误信息")
 
