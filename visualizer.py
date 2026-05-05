@@ -3717,11 +3717,21 @@ def generate_all_charts(conn) -> Dict[str, Any]:
         # 5. 生成交互式三维关联分析图
         print("5. 正在生成交互式三维关联分析图...")
         print("   （自动检测数据源，支持备选方案）")
-        results["interactive_3d"] = generate_interactive_3d_chart(conn)
+        try:
+            results["interactive_3d"] = generate_interactive_3d_chart(conn)
+        except Exception as e:
+            logger.warning(f"三维关联分析图生成失败: {e}")
+            print(f"   ⚠️ 三维关联分析图生成失败: {e}")
+            results["interactive_3d"] = None
 
         # 6. 生成统一仪表板（单HTML文件包含所有图表）
         print("6. 正在生成统一仪表板（单HTML文件）...")
-        results["viewer"] = generate_charts_viewer(conn)
+        try:
+            results["viewer"] = generate_charts_viewer(conn)
+        except Exception as e:
+            logger.warning(f"统一仪表板生成失败: {e}")
+            print(f"   ⚠️ 统一仪表板生成失败: {e}")
+            results["viewer"] = None
 
         # 统计结果
         elapsed_time = time.time() - start_time
@@ -3818,35 +3828,40 @@ def run_visualizer() -> bool:
             # 生成所有图表
             result = generate_all_charts(conn)
 
-            if result.get("success", False):
-                print("✅ 数据可视化模块运行完成！")
-                viewer_path = result.get("results", {}).get("viewer")
+            # 检查是否有任何图表生成成功
+            results = result.get("results", {})
+            success_count = sum(1 for path in results.values() if path is not None)
+            
+            if success_count > 0:
+                print(f"✅ 数据可视化模块运行完成！成功生成 {success_count}/6 个组件")
+                viewer_path = results.get("viewer")
                 if viewer_path:
                     print(f"📁 集成查看器: {viewer_path}")
                     print(f"📁 单个图表: {os.path.abspath('output/charts')}")
                     print("\n💡 建议: 打开集成查看器文件查看所有图表")
 
-                    # 特别提示交互式三维分析功能
-                    interactive_3d_path = result.get("results", {}).get("interactive_3d")
-                    if interactive_3d_path:
-                        print(f"\n🌟 重点推荐: 交互式三维关联分析")
-                        print(f"   功能: 支持选择任意事件进行对比分析")
-                        print(f"   文件: {interactive_3d_path}")
+                # 特别提示交互式三维分析功能
+                interactive_3d_path = results.get("interactive_3d")
+                if interactive_3d_path:
+                    print(f"\n🌟 重点推荐: 交互式三维关联分析")
+                    print(f"   功能: 支持选择任意事件进行对比分析")
+                    print(f"   文件: {interactive_3d_path}")
 
-                        if "backup" in str(interactive_3d_path):
-                            print(f"   ⚠️ 注: 使用了备选方案生成，情感数据可能不完整")
-                            print(f"   建议运行情感分析模块（选项3）后再试")
-            else:
-                print("⚠️ 数据可视化模块部分图表生成失败")
-
-                # 显示具体哪些失败
-                results = result.get("results", {})
+                    if "backup" in str(interactive_3d_path):
+                        print(f"   ⚠️ 注: 使用了备选方案生成，情感数据可能不完整")
+                        print(f"   建议运行情感分析模块（选项3）后再试")
+                
+                # 显示失败的图表
                 failed_charts = [name for name, path in results.items() if not path and name != "viewer"]
                 if failed_charts:
-                    print(f"   失败的图表: {', '.join(failed_charts)}")
-                    print(f"   建议运行诊断功能检查数据状态")
-
-            return result.get("success", False)
+                    print(f"\n⚠️ 以下图表生成失败: {', '.join(failed_charts)}")
+                    print(f"   但不影响其他图表和网站部署")
+                    
+                return True  # 只要有图表生成成功就返回True
+            else:
+                print("❌ 数据可视化模块所有图表生成失败")
+                print("   建议运行诊断功能检查数据状态")
+                return False
 
         except Exception as e:
             logger.error(f"数据可视化模块运行失败: {e}")

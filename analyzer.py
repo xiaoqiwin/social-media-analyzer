@@ -322,6 +322,9 @@ def summarize_event(conn, event_id: int) -> bool:
             total_count,
             current_time
         ))
+        
+        # 提交事务，确保数据写入数据库
+        conn.commit()
 
         logger.info(
             f"事件 {event_id} 情感统计: 正{positive_count} 负{negative_count} 中{neutral_count} 总{total_count}")
@@ -453,26 +456,29 @@ def run_analyzer_auto() -> Dict[str, Any]:
 
         # 获取未分析的评论数量
         unanalyzed_count = get_unanalyzed_count(conn)
+        
+        start_time = time.time()
+        batch_stats = None
 
         if unanalyzed_count == 0:
-            logger.info("ℹ️ 没有需要分析的评论")
-            return {"success": True, "no_data": True}
+            logger.info("ℹ️ 没有需要分析的评论，跳过分析步骤")
+        else:
+            logger.info(f"📊 发现 {unanalyzed_count} 条未分析评论")
 
-        logger.info(f"📊 发现 {unanalyzed_count} 条未分析评论")
+            # 自动处理策略：最多处理2000条
+            total_limit = min(unanalyzed_count, 2000)
+            batch_size = 500
+            commit_every = 100
 
-        # 自动处理策略：最多处理2000条
-        total_limit = min(unanalyzed_count, 2000)
-        batch_size = 500
-        commit_every = 100
+            # 批量分析评论
+            batch_stats = batch_analyze(conn,
+                                        batch_size=batch_size,
+                                        commit_every=commit_every,
+                                        total_limit=total_limit)
 
-        # 批量分析评论
-        start_time = time.time()
-        batch_stats = batch_analyze(conn,
-                                    batch_size=batch_size,
-                                    commit_every=commit_every,
-                                    total_limit=total_limit)
-
-        # 统计事件情感分布
+        # 无论是否有新评论需要分析，都统计事件情感分布
+        # 这样可以修复之前分析过但sentiment_results表为空的情况
+        logger.info("📊 开始统计事件情感分布...")
         summary_stats = summarize_all_events(conn)
 
         elapsed_time = time.time() - start_time
@@ -482,8 +488,8 @@ def run_analyzer_auto() -> Dict[str, Any]:
             "success": True,
             "processing_time": elapsed_time,
             "unanalyzed_count": unanalyzed_count,
-            "processed_count": batch_stats['total_processed'],
-            "analysis_stats": batch_stats,
+            "processed_count": batch_stats['total_processed'] if batch_stats else 0,
+            "analysis_stats": batch_stats or {},
             "summary_stats": summary_stats
         }
 
