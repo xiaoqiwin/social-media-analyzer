@@ -9,12 +9,26 @@ import os
 from typing import Dict, List, Any, Optional
 import urllib.request
 import urllib.error
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
 # 千问AI API配置 - 优先从环境变量读取，否则使用默认值
 QWEN_API_KEY = os.environ.get("QWEN_API_KEY", "sk-0e169d97dfd0423d852c9351e52075a5")
 QWEN_API_URL = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
+
+
+def get_current_time_info() -> str:
+    """获取当前时间信息，用于传递给AI"""
+    now = datetime.now()
+    return f"""
+【系统实时信息】
+- 当前日期时间：{now.strftime('%Y年%m月%d日 %H:%M:%S')}
+- 今天是：{now.strftime('%Y年%m月%d日')}
+- 当前时间：{now.strftime('%H:%M:%S')}
+
+注意：以上时间是系统的实时时间，请基于此时间回答用户关于时间的问题。
+"""
 
 
 def call_qwen_ai(messages: List[Dict[str, str]], temperature: float = 0.7) -> Optional[str]:
@@ -85,7 +99,12 @@ def analyze_wordcloud(event_id: int, event_title: str, wordcloud_data: List[tupl
     # 构建词云数据文本
     words_text = ", ".join([f"{word}({freq}次)" for word, freq in wordcloud_data[:30]])
 
+    # 获取实时时间信息
+    time_info = get_current_time_info()
+    
     system_prompt = f"""你是一位专业的社交媒体数据分析师，擅长从词云图中洞察热点话题的舆论趋势和用户关注点。
+
+{time_info}
 
 当前分析的事件：{event_title}
 事件ID：{event_id}
@@ -104,7 +123,8 @@ def analyze_wordcloud(event_id: int, event_title: str, wordcloud_data: List[tupl
 - 多角度分析，不做限制
 - 结合具体关键词进行论证
 - 提供数据洞察而非泛泛而谈
-- 如发现异常或有趣的模式，请特别指出"""
+- 如发现异常或有趣的模式，请特别指出
+- 如果用户询问时间相关问题，请使用上面提供的系统实时信息回答"""
 
     messages = [
         {"role": "system", "content": system_prompt},
@@ -149,7 +169,12 @@ def analyze_3d_chart(selected_events: List[Dict], user_question: str) -> str:
     negative_events = sum(1 for e in selected_events if e['dominant'] == 'negative')
     neutral_events = sum(1 for e in selected_events if e['dominant'] == 'neutral')
 
+    # 获取实时时间信息
+    time_info = get_current_time_info()
+    
     system_prompt = f"""你是一位专业的社交媒体数据分析师，擅长从热度-传播-情感三维数据中洞察热点事件的传播规律和舆论特征。
+
+{time_info}
 
 当前分析的事件数量：{total_events}个
 总评论数：{total_comments}
@@ -170,7 +195,8 @@ def analyze_3d_chart(selected_events: List[Dict], user_question: str) -> str:
 - 多角度分析，不做限制
 - 结合具体数据进行论证
 - 提供数据洞察而非泛泛而谈
-- 如发现异常或有趣的模式，请特别指出"""
+- 如发现异常或有趣的模式，请特别指出
+- 如果用户询问时间相关问题，请使用上面提供的系统实时信息回答"""
 
     messages = [
         {"role": "system", "content": system_prompt},

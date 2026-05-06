@@ -2132,13 +2132,17 @@ def generate_interactive_html(events_data: List[Dict]) -> str:
                 yAxis: {{
                     type: 'value',
                     name: '评论数（传播量）',
+                    interval: 5,
                     nameTextStyle: {{
                         color: '#666',
                         fontSize: 13
                     }},
                     axisLabel: {{
                         color: '#666',
-                        fontSize: 12
+                        fontSize: 12,
+                        formatter: function(value) {{
+                            return value % 5 === 0 ? value : '';
+                        }}
                     }},
                     axisLine: {{
                         show: true,
@@ -2157,7 +2161,7 @@ def generate_interactive_html(events_data: List[Dict]) -> str:
                     {{
                         name: '评论数',
                         type: 'bar',
-                        barWidth: '60%',
+                        barWidth: seriesData.length === 1 ? '20%' : (seriesData.length <= 3 ? '30%' : '60%'),
                         data: seriesData,
                         label: {{
                             show: true,
@@ -2406,7 +2410,15 @@ def _get_dashboard_data(conn) -> Dict[str, Any]:
                         CASE WHEN s.total_count > 0 THEN s.negative_count * 100.0 / s.total_count ELSE 0 END as negative_ratio,
                         CASE WHEN s.total_count > 0 THEN s.neutral_count * 100.0 / s.total_count ELSE 0 END as neutral_ratio
                     FROM hot_events e
-                    JOIN sentiment_results s ON e.id = s.event_id
+                    JOIN (
+                        SELECT event_id, positive_count, negative_count, neutral_count, total_count
+                        FROM sentiment_results
+                        WHERE (event_id, analyzed_at) IN (
+                            SELECT event_id, MAX(analyzed_at)
+                            FROM sentiment_results
+                            GROUP BY event_id
+                        )
+                    ) s ON e.id = s.event_id
                     WHERE s.total_count >= 1
                     ORDER BY e.hot_value DESC
                     LIMIT 50
@@ -3528,10 +3540,19 @@ def generate_charts_viewer(conn) -> Optional[str]:
                     data: xData,
                     axisLabel: {{ rotate: 45, fontSize: 11 }}
                 }},
-                yAxis: {{ type: 'value', name: '评论数（传播量）' }},
+                yAxis: {{
+                    type: 'value',
+                    name: '评论数（传播量）',
+                    interval: 5,
+                    axisLabel: {{
+                        formatter: function(value) {{
+                            return value % 5 === 0 ? value : '';
+                        }}
+                    }}
+                }},
                 series: [{{
                     type: 'bar',
-                    barWidth: '60%',
+                    barWidth: seriesData.length === 1 ? '20%' : (seriesData.length <= 3 ? '30%' : '60%'),
                     data: seriesData,
                     label: {{ show: true, position: 'top', formatter: '{{c}}' }}
                 }}],
