@@ -8,11 +8,11 @@
     
 </head>
 <body >
-    <div id="ad7a6cf885574d73b1bffc197150fe24" class="chart-container" style="width:100%; height:500px; "></div>
+    <div id="269890dc53d64d47ab15f2390702c87d" class="chart-container" style="width:100%; height:500px; "></div>
     <script>
-        var chart_ad7a6cf885574d73b1bffc197150fe24 = echarts.init(
-            document.getElementById('ad7a6cf885574d73b1bffc197150fe24'), 'white', {renderer: 'canvas', locale: 'ZH'});
-        var option_ad7a6cf885574d73b1bffc197150fe24 = {
+        var chart_269890dc53d64d47ab15f2390702c87d = echarts.init(
+            document.getElementById('269890dc53d64d47ab15f2390702c87d'), 'white', {renderer: 'canvas', locale: 'ZH'});
+        var option_269890dc53d64d47ab15f2390702c87d = {
     "backgroundColor": "#ffffff",
     "animation": true,
     "animationThreshold": 2000,
@@ -31,16 +31,16 @@
             "name": "\u70ed\u5ea6\u503c",
             "legendHoverLink": true,
             "data": [
-                453884.0,
-                438459.0,
-                423265.0,
-                411548.0,
-                410386.0,
-                409655.0,
-                407817.0,
-                404260.0,
-                402240.0,
-                400247.0
+                1169250.0,
+                887215.0,
+                514347.0,
+                512089.0,
+                511586.0,
+                504416.0,
+                502199.0,
+                499976.0,
+                498080.0,
+                493910.0
             ],
             "realtimeSort": false,
             "showBackground": false,
@@ -114,7 +114,7 @@
         "appendToBody": false,
         "transitionDuration": 0.4,
         "displayTransition": true,
-        "formatter":                     function(params) {                        var title = ['\u7537\u53cb\u5a5a\u524d\u67e5\u51fa\u4e59\u809d\u5973\u5b50\u7236\u6bcd\u8ba9\u5206\u624b', '\u6d6a\u59d0\u4e09\u516c\u538b\u529b\u6700\u5927\u7684\u662f\u5218\u96e8\u6615', '\u4e00\u5b9a\u8981\u597d\u597d\u5ea6\u8fc7\u4f60\u7684\u5965\u5fb7\u8d5b\u65f6\u671f', '\u4e94\u4e00\u5fae\u4fe1\u6570\u636e\u62a5\u544a\u6765\u4e86', '\u5362\u6631\u6653\u4e0b\u6c89\u53e3\u7891', '\u767d\u9e7f\u9690\u85cf\u4e86\u548c\u8303\u4e1e\u4e1e\u7684\u624b\u52bf\u821e', '\u60ac\u5d16\u79cb\u5343\u4e8b\u6545\u666f\u533a\u5df2\u505c\u4e1a', '\u5c0f\u9ec4\u8c46\u8f6c\u53d1\u9a6c\u5609\u797a\u7167\u7247', '\u5355\u773c\u76ae\u7684\u5c0f\u9ec4\u8c46\u9053\u6b49', '\u674e\u5609\u8bda\u5957\u73b0\u7ea6455\u4ebf\u6e2f\u5143'][params[0].dataIndex];                        var value = params[0].value;                        var source = ['\u5fae\u535a', '\u5fae\u535a', '\u5fae\u535a', '\u5fae\u535a', '\u5fae\u535a', '\u5fae\u535a', '\u5fae\u535a', '\u5fae\u535a', '\u5fae\u535a', '\u5fae\u535a'][params[0].dataIndex];                        var date = ['2026-05-06', '2026-05-06', '2026-05-06', '2026-05-06', '2026-05-06', '2026-05-06', '2026-05-06', '2026-05-06', '2026-05-06', '2026-05-06'][params[0].dataIndex];                        return '\u6807\u9898: ' + title + '<br/>' +                               '\u70ed\u5ea6: ' + value + '<br/>' +                               '\u6765\u6e90: ' + source + '<br/>' +                               '\u65e5\u671f: ' + date;                    }                    ,
+        "formatter":                     function(params) {                        var title = ['\u5973\u5b50\u5760\u4ea1\u60ac\u5d16\u79cb\u5343\u5f00\u4e1a\u4ec51\u4e2a\u591a\u6708', '\u6b27\u51a0', '\u4e00\u5b9a\u8981\u597d\u597d\u5ea6\u8fc7\u4f60\u7684\u5965\u5fb7\u8d5b\u65f6\u671f', '\u7537\u53cb\u5a5a\u524d\u67e5\u51fa\u4e59\u809d\u5973\u5b50\u7236\u6bcd\u8ba9\u5206\u624b', '\u963f\u68ee\u7eb3\u664b\u7ea7\u6b27\u51a0\u51b3\u8d5b', '\u4e94\u4e00\u5fae\u4fe1\u6570\u636e\u62a5\u544a\u6765\u4e86', '\u9c81\u6bd4\u5965\u79f0\u5bf9\u4f0a\u6717\u53f2\u8bd7\u6012\u706b\u884c\u52a8\u7ed3\u675f', '\u5362\u6631\u6653\u4e0b\u6c89\u53e3\u7891', '\u4e2d\u56fd\u9752\u5e74\u8eab\u9ad8\u6da8\u5e45\u5f15\u5916\u7f51\u70ed\u8bae', '\u767d\u9e7f\u9690\u85cf\u4e86\u548c\u8303\u4e1e\u4e1e\u7684\u624b\u52bf\u821e'][params[0].dataIndex];                        var value = params[0].value;                        var source = ['\u5fae\u535a', '\u5fae\u535a', '\u5fae\u535a', '\u5fae\u535a', '\u5fae\u535a', '\u5fae\u535a', '\u5fae\u535a', '\u5fae\u535a', '\u5fae\u535a', '\u5fae\u535a'][params[0].dataIndex];                        var date = ['2026-05-06', '2026-05-06', '2026-05-06', '2026-05-06', '2026-05-06', '2026-05-06', '2026-05-06', '2026-05-06', '2026-05-06', '2026-05-06'][params[0].dataIndex];                        return '\u6807\u9898: ' + title + '<br/>' +                               '\u70ed\u5ea6: ' + value + '<br/>' +                               '\u6765\u6e90: ' + source + '<br/>' +                               '\u65e5\u671f: ' + date;                    }                    ,
         "textStyle": {
             "fontSize": 14,
             "richInheritPlainLabel": true
@@ -191,16 +191,16 @@
             "animationEasingUpdate": "cubicOut",
             "animationDelayUpdate": 0,
             "data": [
-                "\u7537\u53cb\u5a5a\u524d\u67e5\u51fa\u4e59\u809d\u5973\u5b50\u7236\u6bcd\u8ba9\u5206\u624b",
-                "\u6d6a\u59d0\u4e09\u516c\u538b\u529b\u6700\u5927\u7684\u662f\u5218\u96e8\u6615",
+                "\u5973\u5b50\u5760\u4ea1\u60ac\u5d16\u79cb\u5343\u5f00\u4e1a\u4ec51\u4e2a\u591a\u6708",
+                "\u6b27\u51a0",
                 "\u4e00\u5b9a\u8981\u597d\u597d\u5ea6\u8fc7\u4f60\u7684\u5965\u5fb7\u8d5b\u65f6\u671f",
+                "\u7537\u53cb\u5a5a\u524d\u67e5\u51fa\u4e59\u809d\u5973\u5b50\u7236\u6bcd\u8ba9\u5206\u624b",
+                "\u963f\u68ee\u7eb3\u664b\u7ea7\u6b27\u51a0\u51b3\u8d5b",
                 "\u4e94\u4e00\u5fae\u4fe1\u6570\u636e\u62a5\u544a\u6765\u4e86",
+                "\u9c81\u6bd4\u5965\u79f0\u5bf9\u4f0a\u6717\u53f2\u8bd7\u6012\u706b\u884c\u52a8\u7ed3\u675f",
                 "\u5362\u6631\u6653\u4e0b\u6c89\u53e3\u7891",
-                "\u767d\u9e7f\u9690\u85cf\u4e86\u548c\u8303\u4e1e\u4e1e\u7684\u624b\u52bf\u821e",
-                "\u60ac\u5d16\u79cb\u5343\u4e8b\u6545\u666f\u533a\u5df2\u505c\u4e1a",
-                "\u5c0f\u9ec4\u8c46\u8f6c\u53d1\u9a6c\u5609\u797a\u7167\u7247",
-                "\u5355\u773c\u76ae\u7684\u5c0f\u9ec4\u8c46\u9053\u6b49",
-                "\u674e\u5609\u8bda\u5957\u73b0\u7ea6455\u4ebf\u6e2f\u5143"
+                "\u4e2d\u56fd\u9752\u5e74\u8eab\u9ad8\u6da8\u5e45\u5f15\u5916\u7f51\u70ed\u8bae",
+                "\u767d\u9e7f\u9690\u85cf\u4e86\u548c\u8303\u4e1e\u4e1e\u7684\u624b\u52bf\u821e"
             ]
         }
     ],
@@ -241,9 +241,9 @@
         }
     ]
 };
-        chart_ad7a6cf885574d73b1bffc197150fe24.setOption(option_ad7a6cf885574d73b1bffc197150fe24);
+        chart_269890dc53d64d47ab15f2390702c87d.setOption(option_269890dc53d64d47ab15f2390702c87d);
             window.addEventListener('resize', function(){
-                chart_ad7a6cf885574d73b1bffc197150fe24.resize();
+                chart_269890dc53d64d47ab15f2390702c87d.resize();
             })
     </script>
 </body>
