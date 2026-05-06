@@ -452,7 +452,7 @@ def get_all_events_wordcloud_data(conn) -> Dict[int, List[Tuple[str, int]]]:
             top_words = word_counts.most_common(50)
 
             if top_words:
-                # 计算比例缩放后的字号
+                # 使用对数缩放，更好地展示词频差异
                 min_count = top_words[-1][1]
                 max_count = top_words[0][1]
                 if max_count == min_count:
@@ -461,10 +461,20 @@ def get_all_events_wordcloud_data(conn) -> Dict[int, List[Tuple[str, int]]]:
                 min_font = 12
                 max_font = 80
 
+                # 使用对数缩放，避免高频词和低频词差异过大
+                import math
+                log_min = math.log(min_count + 1)
+                log_max = math.log(max_count + 1)
+                log_range = log_max - log_min if log_max != log_min else 1
+
                 scaled_data = []
                 for word, count in top_words:
-                    ratio = (count - min_count) / (max_count - min_count)
+                    # 对数缩放
+                    log_count = math.log(count + 1)
+                    ratio = (log_count - log_min) / log_range
                     font_size = int(min_font + ratio * (max_font - min_font))
+                    # 确保最小字号
+                    font_size = max(font_size, min_font)
                     scaled_data.append((word, font_size))
 
                 all_wordcloud_data[event_id] = scaled_data
@@ -500,10 +510,19 @@ def get_all_events_wordcloud_data(conn) -> Dict[int, List[Tuple[str, int]]]:
                 min_font = 14
                 max_font = 120
 
+                # 使用对数缩放，更好地展示词频差异
+                log_min = math.log(min_count + 1)
+                log_max = math.log(max_count + 1)
+                log_range = log_max - log_min if log_max != log_min else 1
+
                 scaled_data = []
                 for word, count in top_words:
-                    ratio = (count - min_count) / (max_count - min_count)
+                    # 对数缩放
+                    log_count = math.log(count + 1)
+                    ratio = (log_count - log_min) / log_range
                     font_size = int(min_font + ratio * (max_font - min_font))
+                    # 确保最小字号
+                    font_size = max(font_size, min_font)
                     scaled_data.append((word, font_size))
 
                 all_wordcloud_data[0] = scaled_data  # 0表示全部事件
